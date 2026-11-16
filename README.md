@@ -106,3 +106,9 @@ La sessione dura dieci minuti dall’ultima interazione, anche in background; ri
 La CU ha una regola dedicata, che non viene confusa da richiami alle istruzioni del 730. Campi distinti per anno documento/modello, anno fiscale/redditi e anno archivio. Esempio: CU 2026, redditi 2025 → Fisco/Certificazioni Uniche/2025. Se manca l’anno dei redditi, quello precedente al modello è solo una stima esplicitamente da confermare. Importi o emittenti non individuati con chiarezza restano da verificare, senza impedire una proposta di cartella.
 
 Il pulsante Riconosci sul dispositivo mostra subito l’avvio, rimane disabilitato durante l’elaborazione e restituisce caratteri letti, tipo individuato e campi mancanti. Opzione Forza OCR sul PDF per ignorare testo selezionabile incompleto; aumenta tempi e consumi. Nessun salvataggio delle nuove proposte senza conferma. Metadati aggiuntivi opzionali e compatibili con i backup esistenti.
+
+## Aggiornamento esplicito 3.0.2
+
+Se la vecchia copia offline resta attiva, aprire nello stesso Chrome usato dall’app la pagina `aggiorna.html`. Il pulsante aggiorna il service worker senza leggere o modificare localStorage/IndexedDB, senza eliminare cache e senza reinstallare. L’attivazione anticipata avviene solo dopo il clic. La pagina verifica che il worker attivo risponda con versione 3.0.2, quindi offre Apri Casa in Ordine. Nessuna finestra altrui viene ricaricata forzatamente: salvare prima i moduli aperti e riaprire l’app dalla solita icona dopo la conferma. La nuova versione è indicata nel banner.
+
+Test dedicato: `node tests/update.cjs`. Simula la vecchia versione 4557a57 con cache e scheda ancora aperta, quindi aggiorna senza chiuderla e verifica l’identità dell’archivio cifrato, dell’originale e delle cache preesistenti, oltre all’accesso con la password precedente.

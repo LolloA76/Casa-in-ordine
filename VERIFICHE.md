@@ -41,3 +41,5 @@
 - Nessun errore JavaScript non gestito
 
 Test locali su Chromium con dati fittizi. Tempi e background simulati. OCR reale su immagini e PDF scansiti fittizi, anche ripetuto dal pulsante. Nessun documento personale inviato a servizi esterni. Verifica fisica Android ancora necessaria. Le correzioni non sono pubblicate; migrazione utente ancora in attesa di conferma.
+
+Aggiornamento 3.0.2: superato anche tests/update.cjs, con vecchio service worker 4557a57 e scheda aperta; archivio cifrato, localStorage, password e cache precedenti conservati. Ripetuti con esito positivo i 37 gruppi della suite completa.
