@@ -1,0 +1,8 @@
+node_modules/
+*.casa
+Casa_in_Ordine_backup_*.json
+backups/
+private/
+tests/results.json
+tests/*.png
+__pycache__/

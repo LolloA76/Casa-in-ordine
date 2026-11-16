@@ -1,0 +1,9 @@
+{
+  "name": "casa-in-ordine",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run.cjs"
+  }
+}
