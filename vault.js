@@ -37,6 +37,7 @@ export function validateData(d) {
     check(text(doc.folder,300)&&d.folders.includes(doc.folder)&&text(doc.title,240)&&text(doc.text,150000,true));
     check((doc.date===''||date(doc.date))&&(doc.dueDate===''||date(doc.dueDate))&&(doc.amount===null||money(doc.amount))&&['EUR','CHF',''].includes(doc.currency));
     check(text(doc.issuer,240,true)&&typeof doc.year==='string'&&(doc.year===''||/^(19|20|21)\d{2}$/.test(doc.year))&&typeof doc.month==='string'&&(doc.month===''||/^(0[1-9]|1[0-2])$/.test(doc.month))&&['manuale','da_verificare','confermato'].includes(doc.classification));
+    for(const yearKey of ['documentYear','fiscalYear'])check(doc[yearKey]===undefined||doc[yearKey]===''||(typeof doc[yearKey]==='string'&&/^(19|20|21)\d{2}$/.test(doc[yearKey])));
     for(const [key,list] of [['movementIds',d.movements],['deadlineIds',d.deadlines],['taxIds',d.taxRecords]])check(Array.isArray(doc[key])&&doc[key].every(id=>list.some(r=>r.id===id)));
     total+=doc.size;
   }
@@ -127,7 +128,7 @@ export async function decryptCsv(file,password) {
  catch {throw Error('Password del CSV errata oppure file danneggiato.');}
 }
 
-export function defaultFolders(){return ['Da classificare','Fisco/Dichiarazioni dei redditi','Fisco/F24','Lavoro/Buste paga','Casa/Utenze/Elettricità','Casa/Utenze/Gas','Casa/Utenze/Acqua','Casa/Utenze/Telefonia','Banca/Estratti conto','Assicurazioni','Altri documenti'];}
+export function defaultFolders(){return ['Da classificare','Fisco/Dichiarazioni dei redditi','Fisco/Certificazioni Uniche','Fisco/F24','Lavoro/Buste paga','Casa/Utenze/Elettricità','Casa/Utenze/Gas','Casa/Utenze/Acqua','Casa/Utenze/Telefonia','Banca/Estratti conto','Assicurazioni','Altri documenti'];}
 export function emptyData(){return {schemaVersion:3,movements:[],deadlines:[],taxRecords:[],taxCategories:{Dichiarazioni:['730','Modello Redditi PF'],Versamenti:['F24','Acconti'],'Fiscalità svizzera':['Certificato di salario','Imposta alla fonte']},documents:[],folders:defaultFolders()};}
 export function legacyData(raw){
  check(typeof raw==='string'&&enc.encode(raw).length<8*1024*1024,'Archivio originale troppo grande o non valido. Nessuna modifica effettuata.');

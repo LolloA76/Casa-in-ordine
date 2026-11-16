@@ -1,8 +1,6 @@
-# Verifica aggiornamento 3 — 16 novembre 2026
+# Verifica correzioni sessione e CU — 16 novembre 2026
 
-Eseguiti su Chromium headless, viewport smartphone, con profili isolati e dati fittizi. Nessun dato del telefono letto o trasferito.
-
-Risultato: 33/33 gruppi di test riusciti, inclusi 22 controlli crittografici e di validazione.
+37/37 gruppi riusciti, inclusi 22 controlli crittografici e di validazione.
 
 - Crittografia, credenziali, recupero e validazione
 - Configurazione, conferma chiave e isolamento localStorage
@@ -10,8 +8,10 @@ Risultato: 33/33 gruppi di test riusciti, inclusi 22 controlli crittografici e d
 - Backup cifrato scaricabile e versione precedente disponibile
 - Importazione malformata non cambia archivio
 - Blocco manuale rimuove dati dal DOM e password errata non apre
-- Blocco immediato su visibilitychange e nessuno sblocco tardivo
-- Blocco dopo 5 minuti con orologio simulato
+- Ritorno dal background prima di 10 minuti senza nuova password
+- Attività utente rinnova il timeout a 10 minuti
+- Rientro oltre 10 minuti blocca anche con timer sospeso
+- Salvataggio avviato resta valido durante un breve background
 - Errore scrittura non modifica archivio o conferma un salvataggio
 - Conflitto tra scritture e transazione abortita conservano la copia valida
 - Recupero dalla schermata con nuova password
@@ -23,8 +23,10 @@ Risultato: 33/33 gruppi di test riusciti, inclusi 22 controlli crittografici e d
 - Backup include file, metadati e collegamenti cifrati
 - Cambio password autenticato mantiene documenti e recupero
 - OCR reale su immagine fittizia e nessun invio esterno
+- CU: modello e anno fiscale distinti, anche con richiami al 730
+- PDF scansito CU: OCR automatico e pulsante di riconoscimento ripetuto
 - Importazione backup verificato con credenziale e conservazione precedente
-- Sblocco interrotto dal background non espone dati al termine
+- Sblocco non espone dati mentre la pagina è nascosta
 - CSV esportato cifrato, leggibile con password e rimosso al blocco
 - Offline: ricaricamento, accesso e salvataggio senza rete
 - OCR e PDF disponibili offline dopo preparazione esplicita
@@ -38,10 +40,4 @@ Risultato: 33/33 gruppi di test riusciti, inclusi 22 controlli crittografici e d
 - Nessuna richiesta a servizi esterni
 - Nessun errore JavaScript non gestito
 
-Controllati anche sintassi JavaScript, diff senza errori di spaziatura e identità dei file manifest e icone rispetto alla revisione originale. npm audit delle dipendenze di riconoscimento non ha segnalato vulnerabilità note al momento della verifica; non equivale a un audit indipendente.
-
-Il test del tempo usa orologio simulato; il passaggio in background e il selettore dei file sono simulati. La transizione dalla versione pubblicata è riprodotta su un server locale con il vecchio service worker, poi con i nuovi file sulla stessa origine e con lo stesso localStorage. Non è una pubblicazione reale.
-
-Restano da confermare su Android: prestazioni e memoria, selettori/download reali, sospensione e riavvio, blocco in background, aggiornamento della PWA installata e anteprime delle app recenti. Limiti implementati: 8 MB/file, 20 MB di originali complessivi, OCR prime 20 pagine e anteprima prime 30. Nessun servizio AI esterno.
-
-Il vecchio localStorage è intenzionalmente intatto e non cifrato: la nuova UI richiede password, ma la rimozione futura della copia originale richiederà un consenso separato dopo verifica dei backup. Nessuna pubblicazione o push eseguiti.
+Test locali su Chromium con dati fittizi. Tempi e background simulati. OCR reale su immagini e PDF scansiti fittizi, anche ripetuto dal pulsante. Nessun documento personale inviato a servizi esterni. Verifica fisica Android ancora necessaria. Le correzioni non sono pubblicate; migrazione utente ancora in attesa di conferma.

@@ -11,11 +11,15 @@ function lock(message='Archivio bloccato.') {
  document.querySelectorAll('dialog[open]').forEach(d=>d.close());app.replaceChildren();app.hidden=true;gate.hidden=false;clearTimeout(timer);
  renderGate();status(message);
 }
-function arm(){clearTimeout(timer);if(session)timer=setTimeout(()=>lock('Blocco per 5 minuti di inattività.'),Math.max(0,300000-(Date.now()-lastActivity)));}
-for(const event of ['pointerdown','keydown','input','touchstart'])document.addEventListener(event,()=>{if(!session)return;if(Date.now()-lastActivity>=300000){lock('Blocco per inattività.');return;}lastActivity=Date.now();arm();},{passive:true,capture:true});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)lock('Blocco: app passata in background.');else flushLockedRestore();});
-window.addEventListener('pagehide',()=>lock());window.addEventListener('pageshow',e=>{if(e.persisted)lock();});
-window.addEventListener('focus',()=>{if(session && Date.now()-lastActivity>=300000)lock();});
+const IDLE_TIMEOUT=10*60*1000;
+function expireIfIdle(){if((session||pending)&&Date.now()-lastActivity>=IDLE_TIMEOUT){lock('Blocco per 10 minuti di inattività.');return true;}return false;}
+function arm(){clearTimeout(timer);if(session||pending)timer=setTimeout(()=>{if(!expireIfIdle())arm();},Math.max(0,IDLE_TIMEOUT-(Date.now()-lastActivity)));}
+for(const event of ['pointerdown','keydown','input','touchstart'])document.addEventListener(event,()=>{if(!session&&!pending)return;if(expireIfIdle())return;lastActivity=Date.now();arm();},{passive:true,capture:true});
+// Il background non rinnova la sessione e non causa un blocco immediato.
+document.addEventListener('visibilitychange',()=>{expireIfIdle();if(!document.hidden){arm();flushLockedRestore();}});
+window.addEventListener('pagehide',e=>{if(!e.persisted)lock();else expireIfIdle();});
+window.addEventListener('pageshow',()=>{expireIfIdle();arm();});
+window.addEventListener('focus',()=>{expireIfIdle();arm();});
 window.addEventListener('beforeunload',e=>{if(busy){e.preventDefault();e.returnValue='';}});
 async function renderGate(mode='default') {
  const token=epoch;gate.replaceChildren();
@@ -27,7 +31,7 @@ async function renderGate(mode='default') {
  const p=$('password').value;if(p!==$('repeat').value)throw Error('Le password non coincidono.');
  const legacyRaw=localStorage.getItem('casa_in_ordine_v1');let selectedRaw=legacyRaw;if(legacySourceFile){if(legacySourceFile.size>8*1024*1024)throw Error('Backup precedente troppo grande.');selectedRaw=await legacySourceFile.text();}if(token!==epoch||document.hidden)return;const initialData=selectedRaw===null?emptyData():legacyData(selectedRaw);
  const v=await createVault(initialData,p);const reopened=await unlockVault(v.envelope,p);if(JSON.stringify(reopened.data)!==JSON.stringify(initialData))throw Error('Verifica copia cifrata fallita. Nessun dato modificato.');v.initialData=initialData;v.legacyRaw=legacyRaw;if(token!==epoch||document.hidden)return;
- pending=v;gate.innerHTML=`<p class="notice">Copia verificata: ${initialData.movements.length} movimenti, ${initialData.deadlines.length} scadenze, ${initialData.taxRecords.length} voci fiscali. L’originale resta intatto.</p><h1>Conserva la chiave di emergenza</h1><p>Copiala su carta e tienila separata dal telefono. Non sarà mostrata di nuovo. Chi la possiede insieme al backup può leggere l’archivio.</p><p class="recovery-key" id="recoveryKey"></p><button id="migrationBackup" class="btn secondary">1. Scarica backup cifrato completo</button><form id="confirmKey"><label><input type="checkbox" id="backupConfirmed" required> Ho salvato il backup cifrato in una posizione sicura</label><label>Riscrivi l’intera chiave per confermare<input class="input" id="keyConfirmation" required autocomplete="off" spellcheck="false"></label><button class="btn">Conferma e crea archivio</button></form>`;$('recoveryKey').textContent=v.recovery;let backupDownloaded=false;$('migrationBackup').onclick=()=>{if(!pending)return;download(pending.envelope,'Casa_in_Ordine_prima_attivazione.casa');backupDownloaded=true;};
+ pending=v;lastActivity=Date.now();arm();gate.innerHTML=`<p class="notice">Copia verificata: ${initialData.movements.length} movimenti, ${initialData.deadlines.length} scadenze, ${initialData.taxRecords.length} voci fiscali. L’originale resta intatto.</p><h1>Conserva la chiave di emergenza</h1><p>Copiala su carta e tienila separata dal telefono. Non sarà mostrata di nuovo. Chi la possiede insieme al backup può leggere l’archivio.</p><p class="recovery-key" id="recoveryKey"></p><button id="migrationBackup" class="btn secondary">1. Scarica backup cifrato completo</button><form id="confirmKey"><label><input type="checkbox" id="backupConfirmed" required> Ho salvato il backup cifrato in una posizione sicura</label><label>Riscrivi l’intera chiave per confermare<input class="input" id="keyConfirmation" required autocomplete="off" spellcheck="false"></label><button class="btn">Conferma e crea archivio</button></form>`;$('recoveryKey').textContent=v.recovery;let backupDownloaded=false;$('migrationBackup').onclick=()=>{if(!pending)return;download(pending.envelope,'Casa_in_Ordine_prima_attivazione.casa');backupDownloaded=true;};
  $('confirmKey').onsubmit=e=>authenticate(e,async()=>{
  if(!pending)throw Error('Configurazione scaduta.');
  if($('keyConfirmation').value.replace(/[\s-]/g,'').toUpperCase()!==pending.recovery.replaceAll('-',''))throw Error('La chiave non coincide.');
@@ -55,7 +59,7 @@ async function renderGate(mode='default') {
 async function authenticate(event,fn){event.preventDefault();if(authBusy)return;authBusy=true;const token=epoch;const form=event.currentTarget;form?.classList.add('busy');try{await fn();}catch(e){if(token===epoch)status(e.message,true);}finally{authBusy=false;form?.classList.remove('busy');}}
 async function enter(envelope,key,data){session={envelope,key,data};epoch++;lastActivity=Date.now();pending=null;gate.replaceChildren();gate.hidden=true;app.hidden=false;app.replaceChildren($('appTemplate').content.cloneNode(true));wire();render();arm();status(data.legacyOriginal?'Archivio sbloccato. L’originale non cifrato è conservato per recupero: non cancellare i dati del browser.':'Archivio sbloccato.');if(pendingBackupFile){const file=pendingBackupFile;pendingBackupFile=null;queueMicrotask(()=>importBackup({target:{files:[file],value:''}}));}}
 async function change(fn){if(!session||busy)return;const s=session,token=epoch;busy=true;status('Salvataggio cifrato in corso…');
- try{const candidate=structuredClone(s.data);fn(candidate);validateData(candidate);const next=await updatePayload(s.envelope,s.key,candidate);if(token!==epoch||document.hidden)return;
+ try{const candidate=structuredClone(s.data);fn(candidate);validateData(candidate);const next=await updatePayload(s.envelope,s.key,candidate);if(token!==epoch||expireIfIdle())return;
  await store.commit(next,s.envelope);notify.postMessage('changed');if(token!==epoch)return;s.envelope=next;s.data=candidate;render();status('Salvato e cifrato sul dispositivo.');return true;
  }catch(e){if(token===epoch)status(e.message,true);return false;}finally{if(token===epoch)busy=false;}}
 function download(value,name){const url=URL.createObjectURL(new Blob([typeof value==='string'?value:JSON.stringify(value)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}

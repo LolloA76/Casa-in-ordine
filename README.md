@@ -1,6 +1,6 @@
-# Casa in Ordine — aggiornamento 3, non pubblicato
+# Casa in Ordine — versione 3 e correzioni in revisione
 
-Sviluppo sul ramo locale `sviluppo-sicurezza-documenti`. Il sito ufficiale e il ramo remoto main non sono stati aggiornati. Usare esclusivamente dati fittizi finché non è stata completata la verifica Android e autorizzata la pubblicazione.
+La versione iniziale 3 (commit 4557a57) è pubblicata. Le correzioni successive a sessione e riconoscimento CU sono sviluppate e testate localmente sul ramo `sviluppo-sicurezza-documenti`, in attesa della conferma alla pubblicazione. I test usano soltanto dati fittizi.
 
 ## Avvio e test locali
 
@@ -12,7 +12,7 @@ Sviluppo sul ramo locale `sviluppo-sicurezza-documenti`. Il sito ufficiale e il 
 
 La distribuzione futura manterrà URL, manifest, id, start_url, scope e icone esistenti. Non occorre disinstallare la PWA Android. Il nuovo service worker ha una cache distinta, non elimina quelle precedenti, non cancella dati e non forza l'aggiornamento di una scheda in uso. Per completare l'aggiornamento occorrerà chiudere tutte le vecchie finestre dell'app e riaprirla con Internet disponibile. Non cancellare dati del sito o del browser.
 
-Nessuna pubblicazione, push o distribuzione è stata eseguita. Pubblicare richiede una conferma separata del proprietario dopo il controllo del backup originale.
+Le correzioni descritte in revisione non sono ancora pubblicate. La migrazione sul telefono resta da confermare esplicitamente dal proprietario; gli originali non vengono cancellati.
 
 ## Password e cifratura
 
@@ -20,7 +20,7 @@ Tutto il nuovo archivio, inclusi file, titoli, cartelle, testo OCR, impronte e c
 
 La chiave di emergenza casuale di 256 bit protegge una seconda copia cifrata della chiave archivio. Deve essere trascritta e confermata. Consente di reimpostare la password. Dati e backup sono irrecuperabili se si perdono sia password sia chiave; la chiave senza archivio/backup non ricrea i dati. Cambio password con verifica della password corrente; recupero con chiave tramite schermata di accesso. Esportare un nuovo backup dopo il cambio. Vecchi backup restano leggibili con le credenziali della loro creazione; non esiste revoca retroattiva dei file già esportati.
 
-Blocco dopo cinque minuti di inattività, al passaggio in background e alla chiusura/riapertura. Al blocco vengono rimossi schermate, moduli e anteprime, revocati URL blob e fermato l'OCR; nessun risultato crittografico tardivo può riaprire la sessione. JavaScript non può garantire l'azzeramento fisico di tutte le copie di memoria, né impedire ogni screenshot nell'elenco delle app recenti di Android. Malware, estensioni malevole o codice del sito compromesso mentre si sblocca l'archivio non sono neutralizzati dalla cifratura.
+Blocco dopo dieci minuti dall’ultima attività, contando anche il tempo in background. Tornare in primo piano non rinnova il tempo; un’interazione sì. Il blocco manuale è immediato. Ricaricamento, chiusura completa o terminazione dell’app da Android richiedono un nuovo sblocco: la sessione rimane soltanto in memoria. Al blocco vengono rimossi schermate, moduli e anteprime, revocati URL blob e fermato l'OCR; nessun risultato crittografico tardivo può riaprire la sessione. JavaScript non può garantire l'azzeramento fisico di tutte le copie di memoria, né impedire ogni screenshot nell'elenco delle app recenti di Android. Malware, estensioni malevole o codice del sito compromesso mentre si sblocca l'archivio non sono neutralizzati dalla cifratura.
 
 ## Prima della pubblicazione: proteggere i dati attuali
 
@@ -90,7 +90,7 @@ Scaricare l'originale di un documento è invece un'azione esplicita con avviso: 
 ## Verifiche Android da completare prima di considerare concluso il collaudo
 
 - Tempi di sblocco/PBKDF2 e OCR su telefono reale, consumo memoria con più PDF e batteria.
-- Cinque minuti reali di inattività, cambio app, spegnimento schermo, chiusura forzata e riapertura dalla stessa icona.
+- Dieci minuti reali di inattività, cambio app, spegnimento schermo, chiusura forzata e riapertura dalla stessa icona.
 - Download, selettori file, conferma chiave e ripristino in presenza dei passaggi in background.
 - Foto reali ma fittizie per il contenuto, orientamento, grandi immagini, lingue e PDF scansiti.
 - Conferma su Android dell’aggiornamento dalla versione 2.1 tramite service worker, senza disinstallare né cancellare dati. La transizione viene anche simulata automaticamente su Chromium con il vecchio service worker e la stessa origine locale.
@@ -98,3 +98,11 @@ Scaricare l'originale di un documento è invece un'azione esplicita con avviso: 
 - Controllo delle anteprime Android recenti: il browser non offre le stesse garanzie di un'app nativa.
 
 Non è stato effettuato un audit crittografico indipendente. Il passaggio del sito ufficiale sarà autorizzato separatamente; la suite automatica non sostituisce il collaudo sul dispositivo.
+
+## Correzioni di sessione e riconoscimento CU
+
+La sessione dura dieci minuti dall’ultima interazione, anche in background; ritorno e focus non rinnovano il tempo. Verifica della scadenza al rientro anche se Android ha sospeso i timer. Blocco manuale immediato; sessione soltanto in RAM, senza persistenza della password. Se Android termina il processo, serve nuovo accesso. Anche un salvataggio avviato prima di un breve passaggio in background può completarsi con la sessione ancora valida.
+
+La CU ha una regola dedicata, che non viene confusa da richiami alle istruzioni del 730. Campi distinti per anno documento/modello, anno fiscale/redditi e anno archivio. Esempio: CU 2026, redditi 2025 → Fisco/Certificazioni Uniche/2025. Se manca l’anno dei redditi, quello precedente al modello è solo una stima esplicitamente da confermare. Importi o emittenti non individuati con chiarezza restano da verificare, senza impedire una proposta di cartella.
+
+Il pulsante Riconosci sul dispositivo mostra subito l’avvio, rimane disabilitato durante l’elaborazione e restituisce caratteri letti, tipo individuato e campi mancanti. Opzione Forza OCR sul PDF per ignorare testo selezionabile incompleto; aumenta tempi e consumi. Nessun salvataggio delle nuove proposte senza conferma. Metadati aggiuntivi opzionali e compatibili con i backup esistenti.
